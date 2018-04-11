@@ -1,0 +1,16 @@
+#!/bin/sh -x
+# Script used within WePay Team City to build artifact.
+if which python3 >/dev/null 2>&1; then
+    python=python3
+else
+    python=python3.5
+fi
+
+# Get a pep-440 compliant version. See https://www.python.org/dev/peps/pep-0440/
+git fetch --tags > /dev/null || exit
+version=$(git describe --tags --match '[0-9]*+wepay' | tr - . | grep .) || exit
+
+echo "version = '$version'" > airflow/version.py
+echo "##teamcity[setParameter name='env.deploy_version' value='$version']"
+
+$python setup.py sdist
