@@ -13,4 +13,5 @@ version=$(git describe --tags --match '[0-9]*+wepay' | tr - . | grep .) || exit
 echo "version = '$version'" > airflow/version.py
 echo "##teamcity[setParameter name='env.deploy_version' value='$version']"
 
+export SLUGIFY_USES_TEXT_UNIDECODE=yes
 $python setup.py sdist
