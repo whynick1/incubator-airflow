@@ -2055,7 +2055,7 @@ class Airflow(AirflowViewMixin, BaseView):
                 'isoStart': start_date.isoformat()[:-4],
                 'isoEnd': end_date.isoformat()[:-4],
                 'taskName': task_id,
-                'duration': (end_date - start_date).total_seconds(),
+                'duration': "{}".format(end_date - start_date)[:-4],
                 'status': state,
                 'executionDate': dttm.isoformat(),
                 'try_number': try_count,
