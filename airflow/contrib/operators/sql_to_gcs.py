@@ -277,7 +277,7 @@ class BaseSQLToGoogleCloudStorageOperator(BaseOperator):
             tmp_schema_file_handle.write(s)
 
         self.log.info('Using schema for %s: %s', self.schema_filename, schema)
-	    schema_file_to_upload = {
+        schema_file_to_upload = {
             'file_name': self.schema_filename,
             'file_handle': tmp_schema_file_handle,
             'file_mime_type': 'application/json',
