@@ -27,6 +27,7 @@ import sys
 from tempfile import NamedTemporaryFile
 
 import unicodecsv as csv
+from six import string_types
 
 from airflow.contrib.hooks.gcs_hook import GoogleCloudStorageHook
 from airflow.models import BaseOperator
@@ -240,7 +241,7 @@ class BaseSQLToGoogleCloudStorageOperator(BaseOperator):
     def _write_local_schema_file(self, cursor):
         """
         Takes a cursor, and writes the BigQuery schema for the results to a
-        local file system.
+        local file system. Schema for database will be read from cursor if not specified.
         
         :return: A dictionary where key is a filename to be used as an object
             name in GCS, and values are file handles to local files that
