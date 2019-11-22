@@ -251,7 +251,10 @@ class BaseSQLToGoogleCloudStorageOperator(BaseOperator):
         tmp_schema_file_handle = NamedTemporaryFile(delete=True)
         if self.schema is not None and isinstance(self.schema, string_types):
             schema = self.schema
-            tmp_schema_file_handle.write(schema)
+            if PY3:
+                tmp_schema_file_handle.write(schema.encode('utf-8'))
+            else:
+                tmp_schema_file_handle.write(schema)
         else:
             if self.schema is not None and isinstance(self.schema, list):
                 schema = self.schema
