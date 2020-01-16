@@ -1355,17 +1355,19 @@ class BigQueryBaseCursor(LoggingMixin):
                               self.running_job_id)
                 time.sleep(5)
 
-    def get_schema(self, dataset_id, table_id):
+    def get_schema(self, dataset_id, table_id, project_id=None):
         """
         Get the schema for a given datset.table.
         see https://cloud.google.com/bigquery/docs/reference/v2/tables#resource
 
         :param dataset_id: the dataset ID of the requested table
         :param table_id: the table ID of the requested table
+        :param project_id: the project ID of the requested table.
+                           if not provided, the connector's project ID will be used.
         :return: a table schema
         """
         tables_resource = self.service.tables() \
-            .get(projectId=self.project_id, datasetId=dataset_id, tableId=table_id) \
+            .get(projectId=project_id or self.project_id, datasetId=dataset_id, tableId=table_id) \
             .execute(num_retries=self.num_retries)
         return tables_resource['schema']
 
