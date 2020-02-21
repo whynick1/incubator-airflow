@@ -268,14 +268,10 @@ class GoogleCloudStorageToBigQueryOperator(BaseOperator):
                 time_partitioning=self.time_partitioning,
                 cluster_fields=self.cluster_fields)
 
-        if bq_hook.use_legacy_sql:
-            escaped_table_name = '[{}]'.format(self.destination_project_dataset_table)
-        else:
-            escaped_table_name = '`{}`'.format(self.destination_project_dataset_table)
         if self.max_id_key:
-            cursor.execute('SELECT MAX({}) FROM {}'.format(
+            cursor.execute('SELECT MAX({}) FROM [{}]'.format(
                 self.max_id_key,
-                escaped_table_name))
+                self.destination_project_dataset_table))
             row = cursor.fetchone()
             max_id = row[0] if row[0] else 0
             self.log.info(
