@@ -22,7 +22,7 @@ MySQL to GCS operator.
 
 import base64
 import calendar
-import sys
+import codecs
 
 
 from datetime import date, datetime, timedelta
@@ -33,8 +33,6 @@ from MySQLdb.constants import FIELD_TYPE
 from airflow.hooks.mysql_hook import MySqlHook
 from airflow.utils.decorators import apply_defaults
 from airflow.contrib.operators.sql_to_gcs import BaseSQLToGoogleCloudStorageOperator
-
-PY3 = sys.version_info[0] == 3
 
 
 class MySqlToGoogleCloudStorageOperator(BaseSQLToGoogleCloudStorageOperator):
@@ -116,10 +114,12 @@ class MySqlToGoogleCloudStorageOperator(BaseSQLToGoogleCloudStorageOperator):
     def convert_type(self, value, schema_type):
         """
         Takes a value from MySQLdb, and converts it to a value that's safe for
-        JSON/Google cloud storage/BigQuery. Dates are converted to UTC seconds.
-        Decimals are converted to floats. Binary type fields are encoded with base64,
-        as imported BYTES data must be base64-encoded according to Bigquery SQL
-        date type documentation: https://cloud.google.com/bigquery/data-types
+        JSON/Google cloud storage/BigQuery. Datetimes are converted to UTC seconds.
+        Decimals are converted to floats. Dates are converted to either UTC seconds
+        or ISO formated string. Binary type fields are either encoded with base64,
+        converted to int or converted to string. Imported BYTES data must be
+        base64-encoded according to BigQuery SQL date type documentation:
+        https://cloud.google.com/bigquery/data-types
 
         :param value: MySQLdb column value
         :type value: Any
@@ -128,15 +128,18 @@ class MySqlToGoogleCloudStorageOperator(BaseSQLToGoogleCloudStorageOperator):
         """
         if value is None:
             return value
-        if isinstance(value, (datetime, date)):
+        if isinstance(value, datetime):
             return calendar.timegm(value.timetuple())
         if isinstance(value, timedelta):
             return value.total_seconds()
         if isinstance(value, Decimal):
             return float(value)
-        if isinstance(value, bytes) or schema_type == "BYTES":
-            col_val = base64.standard_b64encode(value)
-            if PY3:
-                col_val = col_val.decode('ascii')
-            return col_val
+        if isinstance(value, date):
+            if schema_type == "DATE":
+                return value.isoformat()
+            return calendar.timegm(value.timetuple())
+        if isinstance(value, bytes):
+            if schema_type == "INTEGER":
+                return int(codecs.encode(value, 'hex'), 16)
+            return base64.standard_b64encode(value).decode('ascii')
         return value
