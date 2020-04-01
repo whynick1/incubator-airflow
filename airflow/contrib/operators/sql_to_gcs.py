@@ -145,7 +145,7 @@ class BaseSQLToGoogleCloudStorageOperator(BaseOperator):
             contain the data for the GCS objects.
         """
         schema = list(map(lambda schema_tuple: schema_tuple[0], cursor.description))
-        col_type_dict = self._get_col_type_dict()
+        col_type_dict = self._get_col_type_dict(cursor.description)
         file_no = 0
         tmp_file_handle = NamedTemporaryFile(delete=True)
         if self.export_format == 'csv':
@@ -216,9 +216,14 @@ class BaseSQLToGoogleCloudStorageOperator(BaseOperator):
     def convert_type(self, value, schema_type):
         """Convert a value from DBAPI to output-friendly formats."""
 
-    def _get_col_type_dict(self):
+    @abc.abstractmethod
+    def get_default_schema(self, fields):
+        """Convert fields to schema base on field type."""
+
+    def _get_col_type_dict(self, fields):
         """
-        Return a dict of column name and column type based on self.schema if not None.
+        Return a dict of column name and column type. The dictionary will be built
+        based on self.schema if not None. Otherwise, default schema will be honored.
         """
         schema = []
         if isinstance(self.schema, str):
@@ -228,6 +233,7 @@ class BaseSQLToGoogleCloudStorageOperator(BaseOperator):
         elif self.schema is not None:
             self.log.warning('Using default schema due to unexpected type.'
                              'Should be a string or list.')
+            schema = self.get_default_schema(fields)
 
         col_type_dict = {}
         try:
@@ -242,7 +248,7 @@ class BaseSQLToGoogleCloudStorageOperator(BaseOperator):
         """
         Takes a cursor, and writes the BigQuery schema for the results to a
         local file system. Schema for database will be read from cursor if not specified.
-        
+
         :return: A dictionary where key is a filename to be used as an object
             name in GCS, and values are file handles to local files that
             contains the BigQuery schema fields in .json format.
@@ -263,7 +269,7 @@ class BaseSQLToGoogleCloudStorageOperator(BaseOperator):
             'file_mime_type': 'application/json',
         }
         return schema_file_to_upload
-    
+
     def _upload_to_gcs(self, files_to_upload):
         """
         Upload all of the file splits (and optionally the schema .json file) to

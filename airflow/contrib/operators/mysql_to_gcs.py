@@ -105,6 +105,14 @@ class MySqlToGoogleCloudStorageOperator(BaseSQLToGoogleCloudStorageOperator):
             'mode': field_mode,
         }
 
+    def get_default_schema(self, fields):
+        schema = []
+        for field in fields:
+            col_name = field[0]
+            col_type = self.type_map.get(field[1], "STRING")
+            schema.append({'name': col_name, 'type': col_type})
+        return schema
+
     def convert_type(self, value, schema_type):
         """
         Takes a value from MySQLdb, and converts it to a value that's safe for
